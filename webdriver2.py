@@ -6,7 +6,11 @@ from datetime import datetime
 import pandas as pd
 import os
 import sys
-
+import time
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 num = int(sys.argv[1]) if len(sys.argv) > 1 else 0
 
 # ここで num を使用して何かを実行する
@@ -56,7 +60,7 @@ def wsinsert(values, sheet):
 today_date = datetime.now().strftime("%Y%m%d")
 # ファイル名に日付を組み込む
 
-file_name = f"output_{today_date}.xlsx"
+file_name = f"価格コム_{today_date}販売.xlsx"
 if not os.path.exists(file_name):
     # Excelブックの作成
     wb = Workbook()
@@ -124,9 +128,19 @@ for item in td_get:
     item_soup = BeautifulSoup(item_page_source, "html.parser")
     # bodytag = item_soup.find("div", id="watch-accessory")
     itemboxbottom = item_soup.find("div", class_="itmBoxBottom")
-    # アイテムネーム
     # 正規表現する必要がある。
-    itemname = item_soup.find("div", id="titleBox").find("h2").get_text(strip=True)
+    time.sleep(1)
+    
+    while True:
+        try:
+            itemname = item_soup.find("div", id="titleBox").find("h2").get_text(strip=True)
+            break
+        except AttributeError:
+                # 指定した要素が存在するまで最大30秒待機
+                print("要素がみつからない要素を探します")
+                WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, "titleBox")))
+                continue
+           
     print("テキスト", itemname)
     # リファレンスナンバー取得する。
     ref_pattern = r"\b(\d{4,6})([a-zA-Z]+)?\b"
